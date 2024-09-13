@@ -8,11 +8,20 @@ const PdfMerger = () => {
   const [mergedPdfUrl, setMergedPdfUrl] = useState(null);
   const [errorMessage, setErrorMessage] = useState(null);
 
+  const MAX_FILES = 100; // Set the maximum number of files allowed
+
   const handleFileChange = (event) => {
     const selectedFiles = Array.from(event.target.files);
 
+    // Check if all selected files are PDFs
     if (selectedFiles.some(file => file.type !== 'application/pdf')) {
       setErrorMessage('All files must be PDFs.');
+      return;
+    }
+
+    // Check if adding the selected files would exceed the limit
+    if (files.length + selectedFiles.length > MAX_FILES) {
+      setErrorMessage(`You can only upload up to ${MAX_FILES} files.`);
       return;
     }
 
@@ -38,13 +47,19 @@ const PdfMerger = () => {
       };
 
       for (let file of files) {
-        const arrayBuffer = await readFileAsArrayBuffer(file);
-        const pdf = await PDFDocument.load(arrayBuffer);
-        const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
+        try {
+          const arrayBuffer = await readFileAsArrayBuffer(file);
+          const pdf = await PDFDocument.load(arrayBuffer);
+          const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
 
-        copiedPages.forEach((page) => {
-          mergedPdf.addPage(page);
-        });
+          copiedPages.forEach((page) => {
+            mergedPdf.addPage(page);
+          });
+        } catch (error) {
+          console.error(`Error processing file ${file.name}:`, error);
+          setErrorMessage(`Error processing file ${file.name}. It may be corrupted or invalid.`);
+          return;
+        }
       }
 
       const mergedPdfBytes = await mergedPdf.save();
@@ -54,8 +69,8 @@ const PdfMerger = () => {
       setMergedPdfUrl(url);
       setErrorMessage(null);
     } catch (error) {
+      console.error('Merge error:', error);
       setErrorMessage('An error occurred while merging the PDFs.');
-      console.error(error);
     }
   };
 
