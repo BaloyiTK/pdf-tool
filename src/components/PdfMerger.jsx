@@ -1,12 +1,14 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { PDFDocument } from 'pdf-lib';
-import { AiOutlineCloudUpload, AiOutlineDownload, AiOutlineFilePdf } from 'react-icons/ai';
+import { AiOutlineCloudUpload, AiOutlineDownload, AiOutlineFilePdf, AiOutlineLoading } from 'react-icons/ai';
 import { BsFileText } from 'react-icons/bs';
 
 const PdfMerger = () => {
   const [files, setFiles] = useState([]);
   const [mergedPdfUrl, setMergedPdfUrl] = useState(null);
   const [errorMessage, setErrorMessage] = useState(null);
+  const [isProcessing, setIsProcessing] = useState(false); // Add state for loading
+  const fileInputRef = useRef(null); // Reference to the file input
 
   const MAX_FILES = 100; // Set the maximum number of files allowed
 
@@ -35,6 +37,8 @@ const PdfMerger = () => {
       return;
     }
 
+    setIsProcessing(true); // Start processing
+
     try {
       const mergedPdf = await PDFDocument.create();
       const readFileAsArrayBuffer = (file) => {
@@ -58,6 +62,7 @@ const PdfMerger = () => {
         } catch (error) {
           console.error(`Error processing file ${file.name}:`, error);
           setErrorMessage(`Error processing file ${file.name}. It may be corrupted or invalid.`);
+          setIsProcessing(false); // Stop processing
           return;
         }
       }
@@ -71,12 +76,18 @@ const PdfMerger = () => {
     } catch (error) {
       console.error('Merge error:', error);
       setErrorMessage('An error occurred while merging the PDFs.');
+    } finally {
+      setIsProcessing(false); // Stop processing
     }
   };
 
   const handleClearFiles = () => {
     setFiles([]);
     setMergedPdfUrl(null);
+    setErrorMessage(null)
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''; // Clear the file input field
+    }
   };
 
   return (
@@ -92,6 +103,7 @@ const PdfMerger = () => {
         multiple
         onChange={handleFileChange}
         className="block w-full text-gray-700 border border-gray-300 rounded-lg p-2 mb-4 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500"
+        ref={fileInputRef} // Attach the reference to the input
       />
       
       <p className="text-gray-600 mb-4 flex items-center">
@@ -109,8 +121,16 @@ const PdfMerger = () => {
       <button
         onClick={handleMergeFiles}
         className="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors mb-4"
+        disabled={isProcessing} // Disable button while processing
       >
-        Merge PDFs
+        {isProcessing ? (
+          <span className="flex items-center">
+            <AiOutlineLoading className="animate-spin text-white text-xl mr-2" />
+            Processing...
+          </span>
+        ) : (
+          'Merge PDFs'
+        )}
       </button>
 
       {files.length > 0 && (
@@ -153,4 +173,4 @@ const PdfMerger = () => {
   );
 };
 
-export default PdfMerger;
+export default PdfMerger
