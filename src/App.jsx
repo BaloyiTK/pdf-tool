@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import  { useState } from "react";
 import {
   AiOutlineMergeCells,
   AiOutlineSplitCells,
@@ -45,7 +45,7 @@ function App() {
       </nav>
 
       {/* Main Content */}
-      <main className="flex flex-col items-center justify-center flex-grow p-6 space-y-6">
+      <main className="flex  flex-col items-center justify-center flex-grow p-6 space-y-6">
         <div className="flex space-x-6">
           <div
             className={`w-80 p-6 rounded-lg shadow-lg bg-white transition-transform transform hover:scale-105 cursor-pointer ${
