@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { PDFDocument } from 'pdf-lib';
-import JSZip from 'jszip';
-import { AiOutlineFilePdf, AiOutlineDownload } from 'react-icons/ai';
+import { AiOutlineCloudUpload, AiOutlineFilePdf, AiOutlineDownload } from 'react-icons/ai';
 import { MdClear } from 'react-icons/md';
 
-const PdfSplitter = () => {
+const PdfExtractor = () => {
   const [pdfDocument, setPdfDocument] = useState(null);
   const [splitPdfUrls, setSplitPdfUrls] = useState([]);
   const [errorMessage, setErrorMessage] = useState(null);
+  const [splitRange, setSplitRange] = useState({ start: '', end: '' });
   const [uploadedFiles, setUploadedFiles] = useState([]);
 
   const handleUploadFiles = async (event) => {
@@ -46,19 +46,32 @@ const PdfSplitter = () => {
     try {
       const totalPages = pdfDocument.getPageCount();
       const splitUrls = [];
+      const { start, end } = splitRange;
+      const startPage = parseInt(start, 10);
+      const endPage = parseInt(end, 10);
 
-      // Create separate PDFs for each page
-      for (let i = 0; i < totalPages; i++) {
-        const newPdf = await PDFDocument.create();
+      if (isNaN(startPage) || isNaN(endPage) || startPage < 1 || endPage < startPage) {
+        setErrorMessage('Invalid page range specified.');
+        return;
+      }
+
+      if (startPage > totalPages || endPage > totalPages) {
+        setErrorMessage('Page range exceeds total number of pages.');
+        return;
+      }
+
+      // Create a single PDF containing the range of pages
+      const newPdf = await PDFDocument.create();
+      for (let i = startPage - 1; i < endPage; i++) {
         const [page] = await newPdf.copyPages(pdfDocument, [i]);
         newPdf.addPage(page);
-
-        const newPdfBytes = await newPdf.save();
-        const blob = new Blob([newPdfBytes], { type: 'application/pdf' });
-        const url = URL.createObjectURL(blob);
-
-        splitUrls.push({ url, name: `split-file-${i + 1}.pdf` });
       }
+
+      const newPdfBytes = await newPdf.save();
+      const blob = new Blob([newPdfBytes], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+
+      splitUrls.push(url);
 
       setSplitPdfUrls(splitUrls);
       setErrorMessage(null);
@@ -68,37 +81,16 @@ const PdfSplitter = () => {
     }
   };
 
-  const handleDownloadAll = async () => {
-    try {
-      const zip = new JSZip();
-
-      for (const { url, name } of splitPdfUrls) {
-        const response = await fetch(url);
-        const blob = await response.blob();
-        zip.file(name, blob);
-      }
-
-      const zipBlob = await zip.generateAsync({ type: 'blob' });
-      const zipUrl = URL.createObjectURL(zipBlob);
-      
-      // Create a temporary anchor element to trigger the download
-      const a = document.createElement('a');
-      a.href = zipUrl;
-      a.download = 'split-pages.zip';
-      a.click();
-      
-      // Clean up the URL object
-      URL.revokeObjectURL(zipUrl);
-    } catch (error) {
-      setErrorMessage('An error occurred while creating the ZIP file.');
-      console.error(error);
-    }
+  const handleRangeChange = (e) => {
+    const { name, value } = e.target;
+    setSplitRange((prevRange) => ({ ...prevRange, [name]: value }));
   };
 
   const clearPdfs = () => {
     setSplitPdfUrls([]);
     setUploadedFiles([]);
     setErrorMessage(null);
+    setSplitRange({ start: '', end: '' });
   };
 
   return (
@@ -114,6 +106,29 @@ const PdfSplitter = () => {
         onChange={handleUploadFiles}
         className="block w-full text-gray-700 border border-gray-300 rounded-lg p-2 mb-4 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500"
       />
+
+      <div className="mb-4">
+        <label className="block text-gray-600 mb-2 flex items-center">
+          <AiOutlineFilePdf className="text-gray-500 text-xl mr-2" />
+          Page Range
+        </label>
+        <input
+          type="number"
+          name="start"
+          value={splitRange.start}
+          onChange={handleRangeChange}
+          placeholder="Start Page"
+          className="block w-full text-gray-700 border border-gray-300 rounded-lg p-2 mb-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+        <input
+          type="number"
+          name="end"
+          value={splitRange.end}
+          onChange={handleRangeChange}
+          placeholder="End Page"
+          className="block w-full text-gray-700 border border-gray-300 rounded-lg p-2 mb-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      </div>
 
       <button
         onClick={handleSplitFile}
@@ -132,28 +147,20 @@ const PdfSplitter = () => {
 
       {splitPdfUrls.length > 0 && (
         <div className="mt-6">
-          <button
-            onClick={handleDownloadAll}
-            className="bg-green-500 text-white py-2 px-4 rounded-lg shadow hover:bg-green-600 transition-colors flex items-center mb-4"
-          >
-            <AiOutlineDownload className="text-white text-xl mr-2" />
-            Download All as ZIP
-          </button>
-
           <h3 className="text-lg font-semibold text-gray-600 mb-2 flex items-center">
             <AiOutlineFilePdf className="text-gray-500 text-xl mr-2" />
             Split PDF Files:
           </h3>
           <div className="grid grid-cols-1 gap-4">
-            {splitPdfUrls.map(({ url, name }, index) => (
+            {splitPdfUrls.map((url, index) => (
               <div key={index}>
                 <a
                   href={url}
-                  download={name}
+                  download={`split-file-${index + 1}.pdf`}
                   className="text-blue-600 underline hover:text-blue-800 transition-colors flex items-center mb-4"
                 >
                   <AiOutlineDownload className="text-blue-500 text-xl mr-2" />
-                  Download {name}
+                  Download File {index + 1}
                 </a>
                 <iframe
                   src={url}
@@ -204,4 +211,4 @@ const PdfSplitter = () => {
   );
 };
 
-export default PdfSplitter;
+export default PdfExtractor;

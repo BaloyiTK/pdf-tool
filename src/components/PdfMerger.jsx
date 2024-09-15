@@ -1,14 +1,22 @@
-import { useState, useRef } from 'react';
-import { PDFDocument } from 'pdf-lib';
-import { AiOutlineCloudUpload, AiOutlineDownload, AiOutlineFilePdf, AiOutlineLoading, AiOutlineDelete, AiOutlineDrag } from 'react-icons/ai';
-import { BsFileText } from 'react-icons/bs';
-import { DndProvider, useDrag, useDrop } from 'react-dnd';
-import { HTML5Backend } from 'react-dnd-html5-backend';
+import { useState, useRef } from "react";
+import { PDFDocument } from "pdf-lib";
+import {
+  AiOutlineCloudUpload,
+  AiOutlineDownload,
+  AiOutlineFilePdf,
+  AiOutlineLoading,
+  AiOutlineDelete,
+  AiOutlineDrag,
+} from "react-icons/ai";
+import { BsFileText } from "react-icons/bs";
+import { DndProvider, useDrag, useDrop } from "react-dnd";
+import { HTML5Backend } from "react-dnd-html5-backend";
 
 // DraggableFileItem Component
+// eslint-disable-next-line react/prop-types
 const DraggableFileItem = ({ file, index, moveFile, removeFile, hasError }) => {
   const [{ isDragging }, ref] = useDrag({
-    type: 'FILE',
+    type: "FILE",
     item: { index },
     collect: (monitor) => ({
       isDragging: monitor.isDragging(),
@@ -16,7 +24,7 @@ const DraggableFileItem = ({ file, index, moveFile, removeFile, hasError }) => {
   });
 
   const [, drop] = useDrop({
-    accept: 'FILE',
+    accept: "FILE",
     hover(item) {
       if (item.index === index) return;
       moveFile(item.index, index);
@@ -27,21 +35,24 @@ const DraggableFileItem = ({ file, index, moveFile, removeFile, hasError }) => {
   return (
     <div
       ref={(node) => ref(drop(node))}
-      className={`flex items-center border-b border-gray-300 pb-2 mb-2 ${hasError ? 'bg-red-100' : ''} ${isDragging ? 'bg-gray-200' : ''}`}
+      className={`flex items-center border-b border-gray-300 pb-2 mb-2 ${
+        hasError ? "bg-red-100" : ""
+      } ${isDragging ? "bg-gray-200" : ""}`}
     >
       <AiOutlineDrag className="text-gray-500 text-xl mr-4 cursor-move" />
       <span className="mr-4 text-gray-700">File {index + 1}:</span>
       <div className="flex-1 overflow-hidden whitespace-nowrap">
-        <span className="truncate" style={{ maxWidth: 'calc(100% - 100px)' }}>
-          {file.name.length > 45 ? `${file.name.substring(0, 42)}...` : file.name}
+        <span className="truncate" style={{ maxWidth: "calc(100% - 100px)" }}>
+          {file.name.length > 45
+            ? `${file.name.substring(0, 42)}...`
+            : file.name}
         </span>
       </div>
-      {hasError && (
-        <span className="text-red-600 ml-4 text-sm">Error</span>
-      )}
+      {hasError && <span className="text-red-600 ml-4 text-sm">Error</span>}
       <button
         onClick={() => removeFile(index)}
         className="text-red-500 ml-4 hover:text-red-900"
+        // eslint-disable-next-line react/prop-types
         aria-label={`Remove ${file.name}`}
       >
         <AiOutlineDelete />
@@ -55,7 +66,7 @@ const PdfMerger = () => {
   const [mergedPdfUrl, setMergedPdfUrl] = useState(null);
   const [errorMessages, setErrorMessages] = useState([]);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [fileName, setFileName] = useState('merged.pdf');
+  const [fileName, setFileName] = useState("merged.pdf");
   const fileInputRef = useRef(null);
   const mergedPdfRef = useRef(null);
   const [isDragOver, setIsDragOver] = useState(false);
@@ -67,14 +78,16 @@ const PdfMerger = () => {
     const selectedFiles = Array.from(event.target.files);
 
     // File type validation
-    if (selectedFiles.some(file => file.type !== 'application/pdf')) {
-      setErrorMessages(['All files must be PDFs.']);
+    if (selectedFiles.some((file) => file.type !== "application/pdf")) {
+      setErrorMessages(["All files must be PDFs."]);
       return;
     }
 
     // File size validation
-    if (selectedFiles.some(file => file.size > MAX_FILE_SIZE_MB * 1024 * 1024)) {
-      setErrorMessages(['Some files exceed the maximum allowed size.']);
+    if (
+      selectedFiles.some((file) => file.size > MAX_FILE_SIZE_MB * 1024 * 1024)
+    ) {
+      setErrorMessages(["Some files exceed the maximum allowed size."]);
       return;
     }
 
@@ -84,13 +97,13 @@ const PdfMerger = () => {
       return;
     }
 
-    setFiles(prevFiles => [...prevFiles, ...selectedFiles]);
+    setFiles((prevFiles) => [...prevFiles, ...selectedFiles]);
     setErrorMessages([]);
   };
 
   const handleMergeFiles = async () => {
     if (files.length < 2) {
-      setErrorMessages(['Please select at least two PDF files to merge.']);
+      setErrorMessages(["Please select at least two PDF files to merge."]);
       return;
     }
 
@@ -115,11 +128,20 @@ const PdfMerger = () => {
         try {
           const arrayBuffer = await readFileAsArrayBuffer(file);
           const pdf = await PDFDocument.load(arrayBuffer);
-          const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
-          copiedPages.forEach(page => mergedPdf.addPage(page));
+          const copiedPages = await mergedPdf.copyPages(
+            pdf,
+            pdf.getPageIndices()
+          );
+          copiedPages.forEach((page) => mergedPdf.addPage(page));
         } catch (error) {
           console.error(`Error processing file ${file.name}:`, error);
-          fileErrors.push({ index: i + 1, name: file.name, error: `Error processing file ${i + 1}: ${file.name}. It may be corrupted or invalid.` });
+          fileErrors.push({
+            index: i + 1,
+            name: file.name,
+            error: `Error processing file ${i + 1}: ${
+              file.name
+            }. It may be corrupted or invalid.`,
+          });
         }
       }
 
@@ -127,7 +149,7 @@ const PdfMerger = () => {
         setErrorMessages(fileErrors);
       } else {
         const mergedPdfBytes = await mergedPdf.save();
-        const blob = new Blob([mergedPdfBytes], { type: 'application/pdf' });
+        const blob = new Blob([mergedPdfBytes], { type: "application/pdf" });
         const url = URL.createObjectURL(blob);
 
         setMergedPdfUrl(url);
@@ -135,13 +157,15 @@ const PdfMerger = () => {
 
         setTimeout(() => {
           if (mergedPdfRef.current) {
-            mergedPdfRef.current.scrollIntoView({ behavior: 'smooth' });
+            mergedPdfRef.current.scrollIntoView({ behavior: "smooth" });
           }
         }, 0);
       }
     } catch (error) {
-      console.error('Merge error:', error);
-      setErrorMessages([{ error: 'An error occurred while merging the PDFs.' }]);
+      console.error("Merge error:", error);
+      setErrorMessages([
+        { error: "An error occurred while merging the PDFs." },
+      ]);
     } finally {
       setIsProcessing(false);
     }
@@ -151,15 +175,17 @@ const PdfMerger = () => {
     setFiles([]);
     setMergedPdfUrl(null);
     setErrorMessages([]);
-    setFileName('merged.pdf');
+    setFileName("merged.pdf");
     if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+      fileInputRef.current.value = "";
     }
   };
 
   const handleRemoveFile = (index) => {
-    setFiles(prevFiles => prevFiles.filter((_, i) => i !== index));
-    setErrorMessages(prevErrors => prevErrors.filter(error => error.index !== index + 1));
+    setFiles((prevFiles) => prevFiles.filter((_, i) => i !== index));
+    setErrorMessages((prevErrors) =>
+      prevErrors.filter((error) => error.index !== index + 1)
+    );
   };
 
   const moveFile = (fromIndex, toIndex) => {
@@ -185,14 +211,16 @@ const PdfMerger = () => {
     const droppedFiles = Array.from(event.dataTransfer.files);
 
     // File type validation
-    if (droppedFiles.some(file => file.type !== 'application/pdf')) {
-      setErrorMessages(['All files must be PDFs.']);
+    if (droppedFiles.some((file) => file.type !== "application/pdf")) {
+      setErrorMessages(["All files must be PDFs."]);
       return;
     }
 
     // File size validation
-    if (droppedFiles.some(file => file.size > MAX_FILE_SIZE_MB * 1024 * 1024)) {
-      setErrorMessages(['Some files exceed the maximum allowed size.']);
+    if (
+      droppedFiles.some((file) => file.size > MAX_FILE_SIZE_MB * 1024 * 1024)
+    ) {
+      setErrorMessages(["Some files exceed the maximum allowed size."]);
       return;
     }
 
@@ -202,7 +230,7 @@ const PdfMerger = () => {
       return;
     }
 
-    setFiles(prevFiles => [...prevFiles, ...droppedFiles]);
+    setFiles((prevFiles) => [...prevFiles, ...droppedFiles]);
     setErrorMessages([]);
   };
 
@@ -216,7 +244,9 @@ const PdfMerger = () => {
 
         <div
           className={`relative border-2 rounded-lg p-6 mb-4 text-center cursor-pointer ${
-            isDragOver ? "border-blue-500 bg-blue-100" : "border-gray-300 bg-gray-50"
+            isDragOver
+              ? "border-blue-500 bg-blue-100"
+              : "border-gray-300 bg-gray-50"
           }`}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}

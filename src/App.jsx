@@ -1,11 +1,8 @@
-import  { useState } from "react";
-import {
-  AiOutlineMergeCells,
-  AiOutlineSplitCells,
-  AiOutlineFilePdf,
-} from "react-icons/ai";
+import { useState } from "react";
+import { AiOutlineMergeCells, AiOutlineSplitCells, AiOutlineFilePdf } from "react-icons/ai";
 import PdfMerger from "./components/PdfMerger";
 import PdfSplitter from "./components/PdfSplitter";
+import PdfExtractor from "./components/PdfExtractor";
 import "./index.css"; // Ensure Tailwind CSS is included
 
 function App() {
@@ -26,13 +23,11 @@ function App() {
             <AiOutlineFilePdf className="text-6xl text-red-600" />
             <div className="flex flex-col">
               <div className="flex">
-                {" "}
                 <span className="text-red-600">PDF</span>
                 <span className="text-4xl font-extrabold italic text-blue-800">
                   Pulse
                 </span>
               </div>
-
               <span className="text-sm text-gray-500 mt-1">
                 powered by{" "}
                 <span className="font-semibold text-gray-700">
@@ -45,7 +40,7 @@ function App() {
       </nav>
 
       {/* Main Content */}
-      <main className="flex  flex-col items-center justify-center flex-grow p-6 space-y-6">
+      <main className="flex flex-col items-center justify-center flex-grow p-6 space-y-6">
         <div className="flex space-x-6">
           <div
             className={`w-80 p-6 rounded-lg shadow-lg bg-white transition-transform transform hover:scale-105 cursor-pointer ${
@@ -80,10 +75,29 @@ function App() {
               Split a PDF file into multiple documents.
             </p>
           </div>
+
+          <div
+            className={`w-80 p-6 rounded-lg shadow-lg bg-white transition-transform transform hover:scale-105 cursor-pointer ${
+              activeComponent === "extractor" ? "border-2 border-blue-600" : ""
+            }`}
+            onClick={() => handleCardClick("extractor")}
+            aria-selected={activeComponent === "extractor"}
+            role="button"
+          >
+            <div className="flex items-center mb-2">
+              <AiOutlineFilePdf className="text-blue-600 text-3xl mr-2" />
+              <h2 className="text-xl font-semibold">PDF Extractor</h2>
+            </div>
+            <p className="text-gray-700">
+              Extract specific pages from a PDF document.
+            </p>
+          </div>
         </div>
 
+        {/* Conditional Rendering */}
         {activeComponent === "merger" && <PdfMerger />}
         {activeComponent === "splitter" && <PdfSplitter />}
+        {activeComponent === "extractor" && <PdfExtractor />}
       </main>
     </div>
   );
