@@ -9,32 +9,44 @@ const PdfSplitter = () => {
   const [splitPdfUrls, setSplitPdfUrls] = useState([]);
   const [errorMessage, setErrorMessage] = useState(null);
   const [uploadedFiles, setUploadedFiles] = useState([]);
+  const [isDragOver, setIsDragOver] = useState(false);
 
-  const handleUploadFiles = async (event) => {
-    const files = Array.from(event.target.files);
-
-    if (files.some(file => file.type !== 'application/pdf')) {
-      setErrorMessage('All files must be PDFs.');
+  const handleUploadFile = async (file) => {
+    if (file.type !== 'application/pdf') {
+      setErrorMessage('The file must be a PDF.');
       return;
     }
 
     try {
-      const filePreviews = await Promise.all(files.map(async (file) => {
-        const fileUrl = URL.createObjectURL(file);
-        return { name: file.name, url: fileUrl };
-      }));
-
-      setUploadedFiles((prevFiles) => [...prevFiles, ...filePreviews]);
+      const fileUrl = URL.createObjectURL(file);
+      setUploadedFiles([{ name: file.name, url: fileUrl }]);
       setErrorMessage(null);
-      if (files.length === 1) {
-        const arrayBuffer = await files[0].arrayBuffer();
-        const pdf = await PDFDocument.load(arrayBuffer);
-        setPdfDocument(pdf);
-      }
+
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await PDFDocument.load(arrayBuffer);
+      setPdfDocument(pdf);
     } catch (error) {
-      setErrorMessage('An error occurred while processing the files.');
+      setErrorMessage('An error occurred while processing the file.');
       console.error(error);
     }
+  };
+
+  const handleDrop = (event) => {
+    event.preventDefault();
+    setIsDragOver(false);
+    const files = Array.from(event.dataTransfer.files);
+    if (files.length > 0) {
+      handleUploadFile(files[0]);
+    }
+  };
+
+  const handleDragOver = (event) => {
+    event.preventDefault();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragOver(false);
   };
 
   const handleSplitFile = async () => {
@@ -80,13 +92,13 @@ const PdfSplitter = () => {
 
       const zipBlob = await zip.generateAsync({ type: 'blob' });
       const zipUrl = URL.createObjectURL(zipBlob);
-      
+
       // Create a temporary anchor element to trigger the download
       const a = document.createElement('a');
       a.href = zipUrl;
       a.download = 'split-pages.zip';
       a.click();
-      
+
       // Clean up the URL object
       URL.revokeObjectURL(zipUrl);
     } catch (error) {
@@ -108,12 +120,28 @@ const PdfSplitter = () => {
         Split PDF
       </h2>
 
-      <input
-        type="file"
-        accept="application/pdf"
-        onChange={handleUploadFiles}
-        className="block w-full text-gray-700 border border-gray-300 rounded-lg p-2 mb-4 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500"
-      />
+      <div
+        className={`border-2 border-dashed border-gray-300 p-4 mb-4 rounded-lg ${isDragOver ? 'bg-gray-100' : ''}`}
+        onDrop={handleDrop}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+      >
+        <p className="text-gray-600 text-center">
+          <AiOutlineFilePdf className="text-gray-500 text-3xl mb-2" />
+          <br />
+          Drag and drop a PDF file here or click to upload
+        </p>
+        <input
+          type="file"
+          accept="application/pdf"
+          onChange={(e) => handleUploadFile(e.target.files[0])}
+          className="hidden"
+          id="fileInput"
+        />
+        <label htmlFor="fileInput" className="cursor-pointer text-blue-500 underline text-center block mt-2">
+          Browse File
+        </label>
+      </div>
 
       <button
         onClick={handleSplitFile}
@@ -172,21 +200,17 @@ const PdfSplitter = () => {
         <div className="w-full max-w-lg bg-white p-6 rounded-lg shadow-lg mb-6">
           <h2 className="text-2xl font-semibold text-gray-700 mb-4 flex items-center">
             <AiOutlineFilePdf className="text-red-500 text-3xl mr-2" />
-            Uploaded Files
+            Uploaded File
           </h2>
-          <div className="grid grid-cols-1 gap-4">
-            {uploadedFiles.map((file, index) => (
-              <div key={index} className="border border-gray-300 rounded-lg p-4">
-                <h3 className="text-xl font-semibold text-gray-800 mb-2">{file.name}</h3>
-                <iframe
-                  src={file.url}
-                  width="100%"
-                  height="200px"
-                  title={`Uploaded File ${index + 1}`}
-                  className="border border-gray-300 rounded-lg"
-                />
-              </div>
-            ))}
+          <div className="border border-gray-300 rounded-lg p-4">
+            <h3 className="text-xl font-semibold text-gray-800 mb-2">{uploadedFiles[0].name}</h3>
+            <iframe
+              src={uploadedFiles[0].url}
+              width="100%"
+              height="200px"
+              title={`Uploaded File`}
+              className="border border-gray-300 rounded-lg"
+            />
           </div>
         </div>
       )}

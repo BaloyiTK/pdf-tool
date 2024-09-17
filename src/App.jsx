@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { AiOutlineMergeCells, AiOutlineSplitCells, AiOutlineFilePdf } from "react-icons/ai";
+import { AiOutlineMergeCells, AiOutlineSplitCells, AiOutlineFileSearch } from "react-icons/ai";
 import PdfMerger from "./components/PdfMerger";
 import PdfSplitter from "./components/PdfSplitter";
 import PdfExtractor from "./components/PdfExtractor";
@@ -16,14 +16,14 @@ function App() {
     <div className="flex flex-col min-h-screen bg-gray-100">
       {/* Navbar */}
       <nav className="sticky top-0 bg-white shadow-md p-4 z-50">
-        <div className="container text-red-600 mx-auto flex items-center justify-between">
+        <div className="container mx-auto flex items-center justify-between px-4">
           {/* Logo can be added here */}
           {/* <img src={logo} alt="Logo" className="h-8"/> */}
           <div className="flex items-center space-x-4 text-2xl font-bold">
-            <AiOutlineFilePdf className="text-6xl text-red-600" />
+            <AiOutlineFileSearch className="text-6xl text-red-600" />
             <div className="flex flex-col">
-              <div className="flex">
-                <span className="text-red-600">PDF</span>
+              <div className="flex flex-wrap items-center">
+                <span className="text-red-600 text-lg sm:text-xl md:text-2xl">PDF</span>
                 <span className="text-4xl font-extrabold italic text-blue-800">
                   Pulse
                 </span>
@@ -40,10 +40,10 @@ function App() {
       </nav>
 
       {/* Main Content */}
-      <main className="flex flex-col items-center justify-center flex-grow p-6 space-y-6">
-        <div className="flex space-x-6">
+      <main className="flex flex-col items-center justify-center flex-grow p-4 sm:p-6 lg:p-8 space-y-6">
+        <div className="flex flex-wrap justify-center gap-6">
           <div
-            className={`w-80 p-6 rounded-lg shadow-lg bg-white transition-transform transform hover:scale-105 cursor-pointer ${
+            className={`w-full sm:w-80 p-6 rounded-lg shadow-lg bg-white transition-transform transform hover:scale-105 cursor-pointer ${
               activeComponent === "merger" ? "border-2 border-blue-600" : ""
             }`}
             onClick={() => handleCardClick("merger")}
@@ -60,7 +60,7 @@ function App() {
           </div>
 
           <div
-            className={`w-80 p-6 rounded-lg shadow-lg bg-white transition-transform transform hover:scale-105 cursor-pointer ${
+            className={`w-full sm:w-80 p-6 rounded-lg shadow-lg bg-white transition-transform transform hover:scale-105 cursor-pointer ${
               activeComponent === "splitter" ? "border-2 border-blue-600" : ""
             }`}
             onClick={() => handleCardClick("splitter")}
@@ -77,7 +77,7 @@ function App() {
           </div>
 
           <div
-            className={`w-80 p-6 rounded-lg shadow-lg bg-white transition-transform transform hover:scale-105 cursor-pointer ${
+            className={`w-full sm:w-80 p-6 rounded-lg shadow-lg bg-white transition-transform transform hover:scale-105 cursor-pointer ${
               activeComponent === "extractor" ? "border-2 border-blue-600" : ""
             }`}
             onClick={() => handleCardClick("extractor")}
@@ -85,7 +85,7 @@ function App() {
             role="button"
           >
             <div className="flex items-center mb-2">
-              <AiOutlineFilePdf className="text-blue-600 text-3xl mr-2" />
+              <AiOutlineFileSearch className="text-blue-600 text-3xl mr-2" />
               <h2 className="text-xl font-semibold">PDF Extractor</h2>
             </div>
             <p className="text-gray-700">
